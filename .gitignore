@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# C++ object files
+*.o
+
+# Generated files
+random_walks.txt
