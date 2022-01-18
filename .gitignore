@@ -133,3 +133,5 @@ dmypy.json
 
 # Generated files
 random_walks.txt
+split/*
+emb/*
