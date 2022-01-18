@@ -2,37 +2,20 @@ import argparse
 import numpy as np
 from sklearn.metrics import roc_curve, auc
 
+
+# Arguments
 parser = argparse.ArgumentParser(description="Link prediction task")
 parser.add_argument("--dataset", type=str, default="CiteSeer")
 parser.add_argument("--embed", type=str, default="emb/CiteSeer-struc2vec.emb")
-parser.add_argument("--test_percent", type=float, default=1.0)
-parser.add_argument("--runs", type=int, default=10)
 args = parser.parse_args()
 
-dataset_path = "graph/%s.edgelist" % args.dataset
+
+# Argument Parse
+dataset = args.dataset
 embed_path = args.embed
-test_perent = args.test_percent
-runs = args.runs
 
-with open(dataset_path, "r") as f:
-    lines = f.readlines()
 
-pos = dict()
-neg = dict()
-
-for idx, line in enumerate(lines):
-    source, target = line.strip("\n").split()
-    source = int(source)
-    target = int(target)
-    
-    try:
-        pos[source].append(target)
-    except:
-        pos[source] = list()
-        pos[source].append(target)
-
-all_nodes = set(list(pos.keys()))
-
+# Load node embedding
 with open(embed_path, "r") as f:
     f.readline()
     lines = f.readlines()
@@ -46,39 +29,56 @@ for line in lines:
     embedding = [float(e) for e in embedding]
     embeddings[node] = np.array(embedding)
 
-scores = list()
 
-for _ in range(runs):
-    for key in pos.keys():
-        nodes = np.random.permutation(np.array(list(all_nodes - set(pos[key]) - set([key])))).tolist()[:len(pos[key])]
-        neg[key] = nodes
+# Predict validation data
+with open("split/valid_%s.edgelist" % dataset, "r") as f:
+    num_pos, num_neg = f.readline().strip("\n").split()
+    num_pos = int(num_pos)
+    num_neg = int(num_neg)
+    lines = f.readlines()
 
-    pos_edges = list()
-    neg_edges = list()
+edges = list()
 
-    for key in pos.keys():
-        for target in pos[key]:
-            pos_edges.append([key, target])
+for line in lines:
+    source, target = line.strip("\n").split()
+    source = int(source)
+    target = int(target)
+    edges.append([source, target])
 
-        for target in neg[key]:
-            neg_edges.append([key, target])
+y_true = np.array([1] * num_pos + [0] * num_neg)
+y_pred = list()
 
-    num_nodes = int(len(pos_edges) * test_perent / 100)
+for pair in edges:
+    score = np.dot(embeddings[pair[0]], embeddings[pair[1]])
+    y_pred.append(score)
 
-    test_pos = np.random.permutation(np.array(pos_edges)).tolist()[:num_nodes]
-    test_neg = np.random.permutation(np.array(neg_edges)).tolist()[:num_nodes]
+y_pred = np.array(y_pred)
+fpr, tpr, _ = roc_curve(y_true, y_pred)
+print("Validation AUC Score: %.4f" % auc(fpr, tpr))
 
-    y_true = np.array([1] * num_nodes + [0] * num_nodes)
-    y_pred = list()
 
-    for pair in (test_pos + test_neg):
-        score = np.dot(embeddings[pair[0]], embeddings[pair[1]])
-        y_pred.append(score)
+# Predict testing data
+with open("split/test_%s.edgelist" % dataset, "r") as f:
+    num_pos, num_neg = f.readline().strip("\n").split()
+    num_pos = int(num_pos)
+    num_neg = int(num_neg)
+    lines = f.readlines()
 
-    y_pred = np.array(y_pred)
+edges = list()
 
-    fpr, tpr, _ = roc_curve(y_true, y_pred)
-    scores.append(auc(fpr, tpr))
+for line in lines:
+    source, target = line.strip("\n").split()
+    source = int(source)
+    target = int(target)
+    edges.append([source, target])
 
-scores = np.array(scores)
-print("AUC Score: %.4f, %.4f" % (np.average(scores), np.std(scores)))
+y_true = np.array([1] * num_pos + [0] * num_neg)
+y_pred = list()
+
+for pair in edges:
+    score = np.dot(embeddings[pair[0]], embeddings[pair[1]])
+    y_pred.append(score)
+
+y_pred = np.array(y_pred)
+fpr, tpr, _ = roc_curve(y_true, y_pred)
+print("Testing AUC Score: %.4f" % auc(fpr, tpr))
