@@ -49,8 +49,11 @@ y_true = np.array([1] * num_pos + [0] * num_neg)
 y_pred = list()
 
 for pair in edges:
-    score = np.dot(embeddings[pair[0]], embeddings[pair[1]])
-    y_pred.append(score)
+    try:
+        score = np.dot(embeddings[pair[0]], embeddings[pair[1]])
+        y_pred.append(score)
+    except:
+        y_pred.append(0)
 
 y_pred = np.array(y_pred)
 fpr, tpr, _ = roc_curve(y_true, y_pred)
@@ -76,8 +79,11 @@ y_true = np.array([1] * num_pos + [0] * num_neg)
 y_pred = list()
 
 for pair in edges:
-    score = np.dot(embeddings[pair[0]], embeddings[pair[1]])
-    y_pred.append(score)
+    try:
+        score = np.dot(embeddings[pair[0]], embeddings[pair[1]])
+        y_pred.append(score)
+    except:
+        y_pred.append(0)
 
 y_pred = np.array(y_pred)
 fpr, tpr, _ = roc_curve(y_true, y_pred)
