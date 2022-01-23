@@ -14,6 +14,7 @@ args = parser.parse_args()
 dataset = args.dataset
 dataset_path = "graph/%s.edgelist" % dataset
 train_filename = "train_%s.edgelist" % dataset
+train_weighted_filename = "train_%s_weighted.edgelist" % dataset
 valid_filename = "valid_%s.edgelist" % dataset
 test_filename = "test_%s.edgelist" % dataset
 train_percent = args.train_percent
@@ -79,6 +80,9 @@ test_neg = neg_edges.tolist()[-num_test:]
 
 # Write training edges to file
 with open("split/" + train_filename, "w") as f:
+    for pair in train_pos:
+        f.write("%d %d\n" % (pair[0], pair[1]))
+with open("split/" + train_weighted_filename, "w") as f:
     for pair in train_pos:
         f.write("%d %d 1\n" % (pair[0], pair[1]))
 
