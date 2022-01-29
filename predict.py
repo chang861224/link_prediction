@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
-from sklearn.metrics import roc_curve, auc
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
 
 
 # Arguments
@@ -55,9 +56,9 @@ for pair in edges:
     except:
         y_pred.append(0)
 
-y_pred = np.array(y_pred)
-fpr, tpr, _ = roc_curve(y_true, y_pred)
-print("Validation AUC Score: %.4f" % auc(fpr, tpr))
+y_pred = np.array(y_pred).reshape(-1, 1)
+clf = LogisticRegression(solver="liblinear", random_state=0).fit(y_pred, y_true)
+print("Validation AUC Score: %.4f" % roc_auc_score(y_true, clf.decision_function(y_pred)))
 
 
 # Predict testing data
@@ -85,6 +86,6 @@ for pair in edges:
     except:
         y_pred.append(0)
 
-y_pred = np.array(y_pred)
-fpr, tpr, _ = roc_curve(y_true, y_pred)
-print("Testing AUC Score: %.4f" % auc(fpr, tpr))
+y_pred = np.array(y_pred).reshape(-1, 1)
+clf = LogisticRegression(solver="liblinear", random_state=0).fit(y_pred, y_true)
+print("Testing AUC Score: %.4f" % roc_auc_score(y_true, clf.decision_function(y_pred)))
